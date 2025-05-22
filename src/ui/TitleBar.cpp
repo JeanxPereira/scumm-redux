@@ -1,13 +1,13 @@
 #include "TitleBar.h"
 #include "../core/Window.h"
-#include "../../res/icons/MaterialSymbols.h"
+#include "../res/icons/MaterialSymbols.h"
 #include "../utils/Utils.h"
 #include "../utils/Events.hpp"
 #include <algorithm>
 
 namespace scummredux {
 
-    TitleBar::TitleBar(Window* window) 
+    TitleBar::TitleBar(Window* window)
         : m_window(window) {
     }
 
@@ -33,7 +33,7 @@ namespace scummredux {
                 renderWindowControls();
             }
 
-            // Handle dragging and double-click
+            // Handle dragging and double-click (simplificado para Windows)
             if (m_draggable) {
                 handleDragging();
                 handleDoubleClick();
@@ -52,10 +52,10 @@ namespace scummredux {
 
     void TitleBar::renderIcon() {
         const float padding = TITLE_PADDING;
-        
+
         // Position for icon
         ImGui::SetCursorPos(ImVec2(padding, (m_height - ICON_SIZE) * 0.5f));
-        
+
         // Use Material Design icon for application
         ImGui::PushStyleColor(ImGuiCol_Text, m_colors.text);
         ImGui::Text(ICON_MS_TERMINAL); // Application icon
@@ -64,17 +64,17 @@ namespace scummredux {
 
     void TitleBar::renderTitle() {
         const float iconWidth = m_showIcon ? (ICON_SIZE + TITLE_PADDING * 2) : TITLE_PADDING;
-        const float buttonsWidth = m_showButtons ? 
+        const float buttonsWidth = m_showButtons ?
             ((BUTTON_SIZE + BUTTON_PADDING) * (3 + m_customButtons.size()) + BUTTON_PADDING) : 0;
-        
+
         // Calculate available space for title
         const float windowWidth = ImGui::GetWindowWidth();
         const float availableWidth = windowWidth - iconWidth - buttonsWidth;
-        
+
         // Determine what to display
         std::string displayTitle;
         std::string displaySubtitle;
-        
+
         if (!m_projectName.empty()) {
             displayTitle = m_projectName;
             if (m_hasUnsavedChanges) {
@@ -89,7 +89,7 @@ namespace scummredux {
         // Limit title length if necessary
         const float maxTitleWidth = availableWidth * 0.8f;
         ImVec2 titleSize = ImGui::CalcTextSize(displayTitle.c_str());
-        
+
         if (titleSize.x > maxTitleWidth) {
             displayTitle = utils::limitStringLength(displayTitle, 40);
         }
@@ -97,7 +97,7 @@ namespace scummredux {
         // Calculate centered position
         titleSize = ImGui::CalcTextSize(displayTitle.c_str());
         float titleX = iconWidth + (availableWidth - titleSize.x) * 0.5f;
-        
+
         // Main title
         ImGui::SetCursorPos(ImVec2(titleX, (m_height - ImGui::GetTextLineHeight()) * 0.5f));
         ImGui::PushStyleColor(ImGuiCol_Text, m_colors.text);
@@ -108,7 +108,7 @@ namespace scummredux {
         if (!displaySubtitle.empty()) {
             ImVec2 subtitleSize = ImGui::CalcTextSize(displaySubtitle.c_str());
             float subtitleX = iconWidth + (availableWidth - subtitleSize.x) * 0.5f;
-            
+
             ImGui::SetCursorPos(ImVec2(subtitleX, m_height * 0.5f + 2));
             ImGui::PushStyleColor(ImGuiCol_Text, m_colors.textSecondary);
             ImGui::Text("%s", displaySubtitle.c_str());
@@ -127,11 +127,11 @@ namespace scummredux {
         // Render custom buttons from right to left
         for (auto it = m_customButtons.rbegin(); it != m_customButtons.rend(); ++it) {
             const auto& [id, button] = *it;
-            
+
             currentX -= (BUTTON_SIZE + BUTTON_PADDING);
-            
+
             ImGui::SetCursorPos(ImVec2(currentX, (m_height - BUTTON_SIZE) * 0.5f));
-            
+
             ImGui::PushStyleColor(ImGuiCol_Button, m_colors.button);
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, m_colors.buttonHovered);
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, m_colors.buttonActive);
@@ -158,30 +158,30 @@ namespace scummredux {
 
     void TitleBar::renderWindowControls() {
         const float windowWidth = ImGui::GetWindowWidth();
-        
+
         // Minimize button
-        ImGui::SetCursorPos(ImVec2(windowWidth - BUTTON_SIZE * 3 - BUTTON_PADDING * 3, 
+        ImGui::SetCursorPos(ImVec2(windowWidth - BUTTON_SIZE * 3 - BUTTON_PADDING * 3,
                                    (m_height - BUTTON_SIZE) * 0.5f));
-        
+
         ImGui::PushStyleColor(ImGuiCol_Button, m_colors.button);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, m_colors.buttonHovered);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, m_colors.buttonActive);
         ImGui::PushStyleColor(ImGuiCol_Text, m_colors.text);
-        
+
         if (ImGui::Button(ICON_MS_MINIMIZE "##minimize", ImVec2(BUTTON_SIZE, BUTTON_SIZE))) {
             minimizeWindow();
         }
         ImGui::PopStyleColor(4);
 
         // Maximize/Restore button
-        ImGui::SetCursorPos(ImVec2(windowWidth - BUTTON_SIZE * 2 - BUTTON_PADDING * 2, 
+        ImGui::SetCursorPos(ImVec2(windowWidth - BUTTON_SIZE * 2 - BUTTON_PADDING * 2,
                                    (m_height - BUTTON_SIZE) * 0.5f));
-        
+
         ImGui::PushStyleColor(ImGuiCol_Button, m_colors.button);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, m_colors.buttonHovered);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, m_colors.buttonActive);
         ImGui::PushStyleColor(ImGuiCol_Text, m_colors.text);
-        
+
         const char* maximizeIcon = m_window->isMaximized() ? ICON_MS_CROP_DIN : ICON_MS_CROP_SQUARE;
         if (ImGui::Button((std::string(maximizeIcon) + "##maximize").c_str(), ImVec2(BUTTON_SIZE, BUTTON_SIZE))) {
             maximizeWindow();
@@ -189,14 +189,14 @@ namespace scummredux {
         ImGui::PopStyleColor(4);
 
         // Close button (with special hover color)
-        ImGui::SetCursorPos(ImVec2(windowWidth - BUTTON_SIZE - BUTTON_PADDING, 
+        ImGui::SetCursorPos(ImVec2(windowWidth - BUTTON_SIZE - BUTTON_PADDING,
                                    (m_height - BUTTON_SIZE) * 0.5f));
-        
+
         ImGui::PushStyleColor(ImGuiCol_Button, m_colors.button);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, m_colors.closeButtonHovered);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, m_colors.closeButtonActive);
         ImGui::PushStyleColor(ImGuiCol_Text, m_colors.text);
-        
+
         if (ImGui::Button(ICON_MS_CLOSE "##close", ImVec2(BUTTON_SIZE, BUTTON_SIZE))) {
             closeWindow();
         }
@@ -204,50 +204,14 @@ namespace scummredux {
     }
 
     void TitleBar::handleDragging() {
-        // Create invisible drag area
+        // No Windows, o drag é tratado pelo WM_NCHITTEST nativo
+        // Aqui só precisamos desenhar a área de drag
         const float windowWidth = ImGui::GetWindowWidth();
-        const float buttonsWidth = m_showButtons ? 
-            ((BUTTON_SIZE + BUTTON_PADDING) * (3 + m_customButtons.size()) + BUTTON_PADDING) : 0;
+        const float buttonsWidth = m_showButtons ? 150.0f : 0.0f;
         const float dragAreaWidth = windowWidth - buttonsWidth;
-        
+
         ImGui::SetCursorPos(ImVec2(0, 0));
-        ImGui::InvisibleButton("##dragArea", ImVec2(dragAreaWidth, m_height), ImGuiButtonFlags_MouseButtonLeft);
-        
-        if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-            if (!m_isDragging) {
-                // Start dragging
-                m_isDragging = true;
-                m_dragStarted = true;
-                m_dragStartPos = ImGui::GetIO().MousePos;
-                m_windowStartPos = m_window->getPosition();
-                
-                // If window is maximized, restore it first
-                if (m_window->isMaximized()) {
-                    m_window->restore();
-                    
-                    // Adjust drag position to account for size change
-                    ImVec2 windowSize = m_window->getSize();
-                    float cursorRatio = (m_dragStartPos.x - m_windowStartPos.x) / windowSize.x;
-                    
-                    ImVec2 newPos = m_window->getPosition();
-                    newPos.x = m_dragStartPos.x - cursorRatio * windowSize.x;
-                    newPos.y = m_dragStartPos.y - m_height / 2;
-                    
-                    m_window->setPosition((int)newPos.x, (int)newPos.y);
-                    m_windowStartPos = newPos;
-                }
-            }
-            
-            // Continue dragging
-            if (m_isDragging) {
-                ImVec2 mouseDelta = ImGui::GetIO().MouseDelta;
-                ImVec2 currentPos = m_window->getPosition();
-                m_window->setPosition((int)(currentPos.x + mouseDelta.x), (int)(currentPos.y + mouseDelta.y));
-            }
-        } else {
-            m_isDragging = false;
-            m_dragStarted = false;
-        }
+        ImGui::InvisibleButton("##dragArea", ImVec2(dragAreaWidth, m_height));
     }
 
     void TitleBar::handleDoubleClick() {
@@ -283,7 +247,7 @@ namespace scummredux {
     void TitleBar::addButton(const std::string& id, const ButtonInfo& button) {
         // Remove existing button with same id
         removeButton(id);
-        
+
         // Add new button
         m_customButtons.emplace_back(id, button);
     }
@@ -291,7 +255,7 @@ namespace scummredux {
     void TitleBar::removeButton(const std::string& id) {
         auto it = std::find_if(m_customButtons.begin(), m_customButtons.end(),
             [&id](const auto& pair) { return pair.first == id; });
-        
+
         if (it != m_customButtons.end()) {
             m_customButtons.erase(it);
         }
@@ -300,7 +264,7 @@ namespace scummredux {
     void TitleBar::setButtonEnabled(const std::string& id, bool enabled) {
         auto it = std::find_if(m_customButtons.begin(), m_customButtons.end(),
             [&id](const auto& pair) { return pair.first == id; });
-        
+
         if (it != m_customButtons.end()) {
             it->second.enabled = enabled;
         }
@@ -327,18 +291,16 @@ namespace scummredux {
     bool TitleBar::isMouseInDragArea() const {
         ImVec2 mousePos = ImGui::GetMousePos();
         ImVec2 windowPos = ImGui::GetWindowPos();
-        
-        return mousePos.x >= windowPos.x && 
-               mousePos.x <= windowPos.x + ImGui::GetWindowWidth() - 
-               ((BUTTON_SIZE + BUTTON_PADDING) * (3 + m_customButtons.size())) &&
-               mousePos.y >= windowPos.y && 
+
+        return mousePos.x >= windowPos.x &&
+               mousePos.x <= windowPos.x + ImGui::GetWindowWidth() - 150.0f &&
+               mousePos.y >= windowPos.y &&
                mousePos.y <= windowPos.y + m_height;
     }
 
     ImVec2 TitleBar::calculateTitlePosition() const {
         const float iconWidth = m_showIcon ? (ICON_SIZE + TITLE_PADDING * 2) : TITLE_PADDING;
-        const float buttonsWidth = m_showButtons ? 
-            ((BUTTON_SIZE + BUTTON_PADDING) * (3 + m_customButtons.size()) + BUTTON_PADDING) : 0;
+        const float buttonsWidth = m_showButtons ? 150.0f : 0.0f;
         
         const float windowWidth = ImGui::GetWindowWidth();
         const float availableWidth = windowWidth - iconWidth - buttonsWidth;

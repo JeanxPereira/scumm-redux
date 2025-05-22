@@ -77,12 +77,6 @@ namespace scummredux {
         // Custom buttons (ordered map to maintain insertion order)
         std::vector<std::pair<std::string, ButtonInfo>> m_customButtons;
         
-        // Dragging state
-        bool m_isDragging = false;
-        bool m_dragStarted = false;
-        ImVec2 m_dragStartPos;
-        ImVec2 m_windowStartPos;
-        
         // Button sizes and styling
         static constexpr float BUTTON_SIZE = 16.0f;
         static constexpr float BUTTON_PADDING = 8.0f;

@@ -7,7 +7,6 @@ namespace scummredux {
 
     WindowDecorator::WindowDecorator(Window* window)
         : m_titleBar(std::make_unique<TitleBar>(window)) {
-        // Store window reference in TitleBar, not here
     }
 
     void WindowDecorator::render() {
@@ -15,42 +14,37 @@ namespace scummredux {
     }
 
     void WindowDecorator::renderMainFrame() {
-        // Setup main window that covers the entire viewport
-        const ImGuiViewport* viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->Pos);
-        ImGui::SetNextWindowSize(viewport->Size);
+        // Setup main window that covers the entire viewport (exatamente como ImHex)
+        ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
 
-        // Main window flags - no decoration, docking enabled
+        // Flags da janela principal (baseado no ImHex)
         ImGuiWindowFlags windowFlags =
+            ImGuiWindowFlags_NoDocking |
             ImGuiWindowFlags_NoTitleBar |
             ImGuiWindowFlags_NoCollapse |
-            ImGuiWindowFlags_NoResize |
             ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoBringToFrontOnFocus |
+            ImGuiWindowFlags_NoResize |
             ImGuiWindowFlags_NoNavFocus |
-            ImGuiWindowFlags_NoBackground |
-            ImGuiWindowFlags_NoDocking;
+            ImGuiWindowFlags_NoBringToFrontOnFocus |
+            ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoScrollWithMouse;
 
         // Add menu bar flag if title bar is shown
         if (m_showTitleBar) {
             windowFlags |= ImGuiWindowFlags_MenuBar;
         }
 
-        // Apply main window styling
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, m_style.windowPadding);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, m_style.windowRounding);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, m_style.borderSize);
-        ImGui::PushStyleColor(ImGuiCol_WindowBg, m_style.backgroundColor);
+        // Styling (baseado no ImHex)
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0F);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0F);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
         // Begin main window
-        if (ImGui::Begin("MainWindow##ScummRedux", nullptr, windowFlags)) {
-            ImGui::PopStyleVar(3);
-            ImGui::PopStyleColor(1);
-
-            // Draw title bar backdrop effect
-            if (m_showTitleBar) {
-                drawTitleBarBackdrop();
-            }
+        if (ImGui::Begin("ImHexDockSpace", nullptr, windowFlags)) {
+            ImGui::PopStyleVar(2); // Pop 2 style vars, keep WindowPadding for later
 
             // Render title bar in menu bar area
             if (m_showTitleBar && ImGui::BeginMenuBar()) {
@@ -58,7 +52,7 @@ namespace scummredux {
                 ImGui::EndMenuBar();
             }
 
-            // Setup and render dock space
+            // Setup and render dock space (método do ImHex)
             renderDockSpace();
 
             // Call content callback if set
@@ -66,26 +60,34 @@ namespace scummredux {
                 m_drawContentCallback();
             }
         } else {
-            ImGui::PopStyleVar(3);
-            ImGui::PopStyleColor(1);
+            ImGui::PopStyleVar(2);
         }
         ImGui::End();
+
+        ImGui::PopStyleVar(1); // Pop WindowPadding
     }
 
     void WindowDecorator::renderDockSpace() {
-        // Get or generate dock space ID
-        if (m_mainDockSpaceId == 0) {
-            m_mainDockSpaceId = ImGui::GetID("MainDockSpace##ScummRedux");
+        // Get available space for docking
+        ImVec2 dockSpaceSize = ImGui::GetContentRegionAvail();
+
+        // Only proceed if we have valid size
+        if (dockSpaceSize.x <= 0 || dockSpaceSize.y <= 0) {
+            return;
         }
 
-        // DockSpace flags
+        // SOLUÇÃO BASEADA NO IMHEX: Deixar o DockSpace gerar e retornar o ID
+        // Não pré-gerar o ID, usar o retornado pelo DockSpace
         ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
 
-        // Get available space for docking
-        // ImVec2 dockspaceSize = ImGui::GetContentRegionAvail();
+        // Criar o DockSpace e capturar o ID retornado (como no ImHex)
+        auto dockId = ImGui::DockSpace(ImGui::GetID("ScummReduxMainDock"), dockSpaceSize, dockspaceFlags);
 
-        // Create the dock space
-        ImGui::DockSpace(m_mainDockSpaceId, ImVec2(0, 0), dockspaceFlags);
+        // Armazenar o ID retornado (como no ImHex faz)
+        if (m_mainDockSpaceId == 0) {
+            m_mainDockSpaceId = dockId;
+            std::cout << "DockSpace ID set to: " << dockId << std::endl;
+        }
 
         // Setup initial layout on first frame
         if (m_isFirstFrame) {
@@ -95,25 +97,15 @@ namespace scummredux {
     }
 
     void WindowDecorator::setupInitialLayout() {
-        // For now, we'll use a simpler approach without DockBuilder
-        // The views will dock themselves when they are first opened
-
-        // TODO: Implement proper initial layout when DockBuilder is available
-        // This is a placeholder that sets up basic docking
-
-        std::cout << "Initial dock layout setup (simplified)" << std::endl;
+        // Simple initial layout setup (como no ImHex)
+        std::cout << "Initial dock layout setup (ImHex style)" << std::endl;
         m_isFirstFrame = false;
     }
 
     void WindowDecorator::drawTitleBarBackdrop() {
         // Optional: Draw a subtle backdrop effect behind the title bar
-        // This can be used for visual effects like the ImHex shadow circle
-
         const auto windowPos = ImGui::GetWindowPos();
         const auto windowSize = ImGui::GetWindowSize();
-
-        // For now, just ensure the title bar area has proper background
-        // More elaborate effects can be added here later
 
         auto drawList = ImGui::GetWindowDrawList();
         const float titleBarHeight = m_titleBar->getHeight();

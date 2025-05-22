@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TitleBar.h"
-#include "ViewManager.h"
+#include "../views/ViewManager.h"  // Corrigido: deve apontar para views/ não ui/
 #include <imgui.h>
 #include <memory>
 #include <functional>

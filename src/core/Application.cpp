@@ -81,8 +81,9 @@ namespace scummredux {
     void Application::initializeImGui() {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        
+
         ImGuiIO& io = ImGui::GetIO();
+        // Enable docking (safe version - let ImGui handle it)
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         io.ConfigWindowsMoveFromTitleBarOnly = true;
@@ -107,7 +108,7 @@ namespace scummredux {
 
     void Application::setupViews() {
         auto& viewManager = ViewManager::getInstance();
-        
+
         // Create all views
         viewManager.addView<ExplorerView>();
         viewManager.addView<EditorView>();
@@ -153,9 +154,9 @@ namespace scummredux {
         }
 
         ConsoleView::info("Starting main loop...");
-        
+
         m_lastFrameTime = glfwGetTime();
-        
+
         // Main loop
         while (!m_window->shouldClose() && !m_shouldClose) {
             handleEvents();
@@ -176,7 +177,7 @@ namespace scummredux {
         double currentTime = glfwGetTime();
         m_deltaTime = currentTime - m_lastFrameTime;
         m_lastFrameTime = currentTime;
-        
+
         // Update FPS counter
         m_frameCount++;
         if (currentTime - m_fpsUpdateTime >= 1.0) {
@@ -191,31 +192,12 @@ namespace scummredux {
 
     void Application::render() {
         beginFrame();
-        
+
         // Main rendering
         m_windowDecorator->render();
-        
-        // Draw ImGui demo if enabled
-        if (m_showDemo) {
-            ImGui::ShowDemoWindow(&m_showDemo);
-        }
-        
-        // FPS overlay
-        if (m_showFPS) {
-            ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
-            ImGui::SetNextWindowBgAlpha(0.8f);
-            if (ImGui::Begin("FPS", nullptr, 
-                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | 
-                ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing |
-                ImGuiWindowFlags_NoNav)) {
-                ImGui::Text("FPS: %.1f", m_currentFPS);
-                ImGui::Text("Frame Time: %.3f ms", m_deltaTime * 1000.0);
-            }
-            ImGui::End();
-        }
-        
+
         endFrame();
-        
+
         // Post frame end event
         EventFrameEnd::post({});
     }
@@ -230,27 +212,27 @@ namespace scummredux {
     void Application::endFrame() {
         // Render ImGui
         ImGui::Render();
-        
+
         // Setup viewport
         int display_w, display_h;
         glfwGetFramebufferSize(m_window->getHandle(), &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        
-        // Clear and render
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        // Clear and render with solid background (fixed transparency)
+        glClearColor(0.11f, 0.11f, 0.14f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        
+
         // Swap buffers
         m_window->swapBuffers();
     }
 
     void Application::drawMainContent() {
         auto& viewManager = ViewManager::getInstance();
-        
+
         // Draw always visible content
         viewManager.drawAlwaysVisibleContent();
-        
+
         // Draw all views
         viewManager.drawViews();
     }

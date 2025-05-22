@@ -3,10 +3,13 @@
 #include "../core/Settings.h"
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 namespace scummredux {
 
     EditorView::EditorView() : View("Editor") {
+        std::cout << "EditorView constructor called" << std::endl;
+
         // Load editor settings
         auto& settings = Settings::getInstance();
         m_showLineNumbers = settings.get<bool>(Settings::Editor::SHOW_LINE_NUMBERS, true);
@@ -34,17 +37,28 @@ namespace scummredux {
     }
 
     void EditorView::draw() {
-        if (ImGui::Begin(getWindowName().c_str(), &getWindowOpenState())) {
-            drawToolbar();
+        std::cout << "EditorView::draw() start" << std::endl;
 
-            if (!m_tabs.empty()) {
-                drawTabBar();
+        try {
+            if (ImGui::Begin(getWindowName().c_str(), &getWindowOpenState())) {
+                std::cout << "EditorView window created successfully" << std::endl;
+
+                // MINIMAL VERSION - just text for now
+                ImGui::Text("Editor View - Coming Soon!");
+                ImGui::Text("File: %s", m_currentFileName.c_str());
+
+                std::cout << "EditorView content drawn successfully" << std::endl;
+            } else {
+                std::cout << "EditorView window failed to create" << std::endl;
             }
-
-            drawEditor();
-            drawStatusBar();
+            ImGui::End();
+        } catch (const std::exception& e) {
+            std::cout << "Exception in EditorView::draw(): " << e.what() << std::endl;
+        } catch (...) {
+            std::cout << "Unknown exception in EditorView::draw()" << std::endl;
         }
-        ImGui::End();
+
+        std::cout << "EditorView::draw() end" << std::endl;
     }
 
     void EditorView::drawToolbar() {
@@ -174,21 +188,37 @@ namespace scummredux {
     void EditorView::drawEditor() {
         // Calculate editor area
         ImVec2 editorSize = ImGui::GetContentRegionAvail();
-        editorSize.y -= 25; // Reserve space for status bar
+
+        // Reserve space for status bar
+        const float statusBarHeight = 25.0f;
+        if (editorSize.y > statusBarHeight + 10.0f) {
+            editorSize.y -= statusBarHeight;
+        } else {
+            editorSize.y = std::max(50.0f, editorSize.y * 0.8f);
+        }
 
         // Line numbers column width
         float lineNumberWidth = 0;
         if (m_showLineNumbers) {
             lineNumberWidth = ImGui::CalcTextSize("9999").x + 20; // Max 4 digits + padding
-            editorSize.x -= lineNumberWidth;
+            if (editorSize.x > lineNumberWidth + 50.0f) {
+                editorSize.x -= lineNumberWidth;
+            } else {
+                lineNumberWidth = 0; // Disable if not enough space
+                m_showLineNumbers = false;
+            }
         }
+
+        // Ensure minimum size
+        editorSize.x = std::max(100.0f, editorSize.x);
+        editorSize.y = std::max(50.0f, editorSize.y);
 
         // Editor background
         ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.12f, 0.12f, 0.15f, 1.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
         // Line numbers
-        if (m_showLineNumbers) {
+        if (m_showLineNumbers && lineNumberWidth > 0) {
             if (ImGui::BeginChild("LineNumbers", ImVec2(lineNumberWidth, editorSize.y), true, ImGuiWindowFlags_NoScrollbar)) {
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
 
@@ -241,9 +271,6 @@ namespace scummredux {
                     m_tabs[m_activeTabIndex].hasUnsavedChanges = true;
                 }
             }
-
-            // TODO: Calculate cursor position for status bar
-            // This would require more advanced text editor implementation
         }
         ImGui::EndChild();
 

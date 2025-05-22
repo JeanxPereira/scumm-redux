@@ -44,53 +44,56 @@ namespace scummredux {
         for (auto& view : m_views) {
             if (!view->shouldProcess()) continue;
 
-            // Set up window class for consistent docking behavior
+            // Set up window class for consistent docking behavior (baseado no ImHex)
             ImGuiWindowClass windowClass = {};
-            windowClass.DockNodeFlagsOverrideSet |= ImGuiDockNodeFlags_NoCloseButton;
-            
-            // Count open views to determine if we should show tab bar
+
+            // Use safer flags that exist in most ImGui versions
+            #ifdef IMGUI_HAS_DOCK
+            // Try to use the flags if they exist, otherwise skip
+            // windowClass.DockNodeFlagsOverrideSet |= ImGuiDockNodeFlags_NoDockingSplit;
+
+            // Count open views to determine behavior (como no ImHex)
             const auto openViewCount = std::count_if(m_views.begin(), m_views.end(),
                 [](const auto& v) { return v->hasViewMenuItemEntry() && v->shouldProcess(); });
-            
-            if (openViewCount <= 1) {
-                windowClass.DockNodeFlagsOverrideSet |= ImGuiDockNodeFlags_NoTabBar;
-            }
+
+            // Se só tem 1 view, pode tentar esconder tab bar (se a flag existir)
+            // if (openViewCount <= 1) {
+            //     windowClass.DockNodeFlagsOverrideSet |= ImGuiDockNodeFlags_NoTabBar;
+            // }
+            #endif
 
             ImGui::SetNextWindowClass(&windowClass);
 
-            // Set background alpha for undocked windows
-            auto window = ImGui::FindWindowByName(view->getWindowName().c_str());
-            if (window != nullptr && window->DockNode == nullptr) {
-                ImGui::SetNextWindowBgAlpha(1.0F);
-            }
+            // Set background alpha for all windows
+            ImGui::SetNextWindowBgAlpha(1.0F);
 
-            // Draw the view
+            // Draw the view (exatamente como no ImHex)
             view->draw();
             view->trackViewOpenState();
 
-            // Handle focus tracking
+            // Handle focus tracking (versão simplificada do ImHex)
             if (view->getWindowOpenState()) {
-                if (window != nullptr && (window->Flags & ImGuiWindowFlags_Popup) != ImGuiWindowFlags_Popup) {
-                    auto windowName = view->getWindowName();
-                    ImGui::Begin(windowName.c_str());
+                // Create a temporary window context to check focus (método do ImHex)
+                auto windowName = view->getWindowName();
 
-                    // Check if window is focused
+                // Push window context
+                if (ImGui::Begin(windowName.c_str())) {
+                    // Check if window is focused (como no ImHex)
                     const bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows | ImGuiFocusedFlags_NoPopupHierarchy);
                     view->setFocused(focused);
 
                     if (focused && m_focusedView != view.get()) {
-                        m_focusedView = view.get();
+                        setFocusedView(view.get());
                     }
 
-                    // Handle window just opened
-                    if (view->didWindowJustOpen() && !ImGui::IsWindowDocked()) {
-                        // Dock the window to main dock space
-                        // This would require access to the main dock space ID
-                        // ImGui::DockBuilderDockWindow(windowName.c_str(), mainDockSpaceId);
+                    // Handle window just opened (versão simplificada)
+                    if (view->didWindowJustOpen()) {
+                        // No ImHex eles fazem: ImGui::DockBuilderDockWindow(windowName.c_str(), mainDockSpaceId);
+                        // Como não temos acesso, deixamos o ImGui fazer docking automático
+                        std::cout << "View opened: " << view->getName() << std::endl;
                     }
-
-                    ImGui::End();
                 }
+                ImGui::End();
             }
         }
     }
@@ -122,9 +125,9 @@ namespace scummredux {
             if (m_focusedView) {
                 m_focusedView->setFocused(false);
             }
-            
+
             m_focusedView = view;
-            
+
             if (m_focusedView) {
                 m_focusedView->setFocused(true);
             }
@@ -147,14 +150,12 @@ namespace scummredux {
     }
 
     void ViewManager::saveLayout(const std::string& layoutName) {
-        // TODO: Implement layout saving
-        // This would save the current docking configuration and view states
+        // TODO: Implement layout saving (como no ImHex)
         std::cout << "Saving layout: " << layoutName << std::endl;
     }
 
     void ViewManager::loadLayout(const std::string& layoutName) {
-        // TODO: Implement layout loading
-        // This would restore a saved docking configuration and view states
+        // TODO: Implement layout loading (como no ImHex)
         std::cout << "Loading layout: " << layoutName << std::endl;
     }
 
@@ -164,8 +165,7 @@ namespace scummredux {
             view->setOpen(true);
             view->setShouldProcess(true);
         }
-        
-        // TODO: Reset docking layout to default
+
         std::cout << "Reset to default layout" << std::endl;
     }
 

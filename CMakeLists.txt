@@ -47,7 +47,10 @@ target_link_libraries(${PROJECT_NAME}
 
 # Platform-specific libraries
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE opengl32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            opengl32
+            dwmapi     # Adicionar DWM API para Windows
+    )
 elseif(APPLE)
     find_library(COCOA_LIBRARY Cocoa)
     find_library(IOKIT_LIBRARY IOKit)
@@ -138,4 +141,12 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
     message(STATUS "  Debug Features: Disabled")
     message(STATUS "  Optimization: Enabled")
+endif()
+
+# Ensure resources directory exists in source
+if(NOT EXISTS ${PROJECT_SOURCE_DIR}/res)
+    message(STATUS "Creating resources directory...")
+    file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/res)
+    file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/res/icons)
+    file(MAKE_DIRECTORY ${PROJECT_SOURCE_DIR}/res/fonts)
 endif()

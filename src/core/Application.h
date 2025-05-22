@@ -2,7 +2,7 @@
 
 #include "Window.h"
 #include "../ui/WindowDecorator.h"
-#include "../ui/ViewManager.h"
+#include "../views/ViewManager.h"  // CORRIGIDO: era ../ui/ViewManager.h
 #include "../ui/StyleManager.h"
 #include <memory>
 
@@ -32,12 +32,12 @@ namespace scummredux {
         void shutdownImGui();
         void setupViews();
         void setupEventHandlers();
-        
+
         // Main loop functions
         void handleEvents();
         void update();
         void render();
-        
+
         // Rendering phases
         void beginFrame();
         void endFrame();
@@ -46,21 +46,20 @@ namespace scummredux {
         // Core components
         std::unique_ptr<Window> m_window;
         std::unique_ptr<WindowDecorator> m_windowDecorator;
-        
+
         // Application state
         bool m_initialized = false;
         bool m_shouldClose = false;
-        
+
         // Timing
         double m_lastFrameTime = 0.0;
         double m_deltaTime = 0.0;
         int m_frameCount = 0;
         double m_fpsUpdateTime = 0.0;
         float m_currentFPS = 0.0f;
-        
-        // Settings
-        bool m_showDemo = false;
-        bool m_showFPS = false;
+
+        // Settings (removed unused m_showDemo and m_showFPS)
+        // These can be re-added when needed
     };
 
 } // namespace scummredux

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../views/View.h"
+#include "View.h"
 #include <memory>
 #include <vector>
 #include <unordered_map>

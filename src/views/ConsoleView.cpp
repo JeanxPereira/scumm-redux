@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <regex>
+#include <iostream>
 
 namespace scummredux {
 
@@ -29,6 +30,7 @@ namespace scummredux {
 
     ConsoleView::ConsoleView() : View("Console") {
         s_instance = this;
+        std::cout << "ConsoleView constructor called" << std::endl;
 
         // Welcome messages
         log("SCUMM Redux Console initialized", LogLevel::Success);
@@ -36,15 +38,33 @@ namespace scummredux {
     }
 
     void ConsoleView::draw() {
-        if (ImGui::Begin(getWindowName().c_str(), &getWindowOpenState())) {
-            drawToolbar();
-            drawLogEntries();
-            drawCommandInput();
+        std::cout << "ConsoleView::draw() start" << std::endl;
+
+        try {
+            if (ImGui::Begin(getWindowName().c_str(), &getWindowOpenState())) {
+                std::cout << "ConsoleView window created successfully" << std::endl;
+
+                drawToolbar();
+                drawLogEntries();
+                drawCommandInput();
+
+                std::cout << "ConsoleView content drawn successfully" << std::endl;
+            } else {
+                std::cout << "ConsoleView window failed to create" << std::endl;
+            }
+            ImGui::End();
+        } catch (const std::exception& e) {
+            std::cout << "Exception in ConsoleView::draw(): " << e.what() << std::endl;
+        } catch (...) {
+            std::cout << "Unknown exception in ConsoleView::draw()" << std::endl;
         }
-        ImGui::End();
+
+        std::cout << "ConsoleView::draw() end" << std::endl;
     }
 
     void ConsoleView::drawToolbar() {
+        std::cout << "ConsoleView::drawToolbar() start" << std::endl;
+
         // Clear button
         if (ImGui::Button(ICON_MS_CLEAR_ALL "##clear")) {
             clear();
@@ -80,6 +100,8 @@ namespace scummredux {
         // Filters
         drawFilters();
         ImGui::Separator();
+
+        std::cout << "ConsoleView::drawToolbar() end" << std::endl;
     }
 
     void ConsoleView::drawFilters() {
@@ -107,11 +129,29 @@ namespace scummredux {
     }
 
     void ConsoleView::drawLogEntries() {
+        std::cout << "ConsoleView::drawLogEntries() start" << std::endl;
+
         // Calculate available space for log entries
         ImVec2 logRegionSize = ImGui::GetContentRegionAvail();
-        logRegionSize.y -= 30; // Reserve space for command input
+
+        // DEFENSIVE: Ensure we have enough space before subtracting
+        const float reservedSpace = 30.0f; // Space for command input
+        if (logRegionSize.y > reservedSpace + 10.0f) {
+            logRegionSize.y -= reservedSpace;
+        } else {
+            // If window is too small, use minimum viable size
+            logRegionSize.y = std::max(50.0f, logRegionSize.y * 0.7f);
+        }
+
+        // DEFENSIVE: Ensure we have valid minimum size
+        logRegionSize.x = std::max(100.0f, logRegionSize.x);
+        logRegionSize.y = std::max(50.0f, logRegionSize.y);
+
+        std::cout << "Using log region size: " << logRegionSize.x << "x" << logRegionSize.y << std::endl;
 
         if (ImGui::BeginChild("LogRegion", logRegionSize, true, ImGuiWindowFlags_HorizontalScrollbar)) {
+            std::cout << "LogRegion child created successfully" << std::endl;
+
             // Filter and display log entries
             bool hasSearchFilter = strlen(m_searchBuffer) > 0;
             std::regex searchRegex;
@@ -159,6 +199,8 @@ namespace scummredux {
                 ImGui::Text("[%s] %s %s", entry.timestamp.c_str(), icon, entry.message.c_str());
                 ImGui::PopStyleColor();
 
+                // DISABLED CONTEXT MENU - might be causing the crash
+                /*
                 // Context menu for copying
                 if (ImGui::BeginPopupContextItem()) {
                     if (ImGui::MenuItem("Copy")) {
@@ -166,6 +208,7 @@ namespace scummredux {
                     }
                     ImGui::EndPopup();
                 }
+                */
             }
 
             // Auto-scroll to bottom
@@ -173,11 +216,17 @@ namespace scummredux {
                 ImGui::SetScrollHereY(1.0f);
                 m_scrollToBottom = false;
             }
+        } else {
+            std::cout << "ERROR: Failed to create LogRegion child window!" << std::endl;
         }
         ImGui::EndChild();
+
+        std::cout << "ConsoleView::drawLogEntries() end" << std::endl;
     }
 
     void ConsoleView::drawCommandInput() {
+        std::cout << "ConsoleView::drawCommandInput() start" << std::endl;
+
         ImGui::Separator();
 
         // Command input
@@ -200,6 +249,8 @@ namespace scummredux {
         if (ImGui::IsItemHovered() || (ImGui::IsWindowFocused() && !ImGui::IsAnyItemActive())) {
             ImGui::SetKeyboardFocusHere(-1);
         }
+
+        std::cout << "ConsoleView::drawCommandInput() end" << std::endl;
     }
 
     // Static callback for ImGui
@@ -320,6 +371,9 @@ namespace scummredux {
     // Static logging functions
     void ConsoleView::log(const std::string& message, LogLevel level) {
         s_logEntries.emplace_back(message, level);
+
+        // Also log to cout for debugging
+        std::cout << "[LOG " << static_cast<int>(level) << "] " << message << std::endl;
         
         // Limit number of entries
         if (s_logEntries.size() > MAX_LOG_ENTRIES) {

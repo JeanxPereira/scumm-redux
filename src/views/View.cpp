@@ -1,10 +1,12 @@
 #include "View.h"
 #include "../utils/Events.hpp"
+#include <iostream>
 
 namespace scummredux {
 
-    View::View(std::string name) 
+    View::View(std::string name)
         : m_name(std::move(name)) {
+        std::cout << "View created: " << m_name << std::endl;
     }
 
     std::string View::getWindowName() const {
@@ -12,7 +14,9 @@ namespace scummredux {
     }
 
     std::string View::toWindowName(const std::string& viewName) {
-        return viewName + "##ScummRedux";
+        std::string windowName = viewName + "##ScummRedux";
+        std::cout << "Generated window name: " << windowName << std::endl;
+        return windowName;
     }
 
     bool View::didWindowJustOpen() {
@@ -25,10 +29,12 @@ namespace scummredux {
             if (m_isOpen && !m_previousOpenState) {
                 // Window just opened
                 m_windowJustOpened = true;
+                std::cout << "View window just opened: " << m_name << std::endl;
                 EventViewOpened::post({m_name});
             } else if (!m_isOpen && m_previousOpenState) {
                 // Window just closed
                 m_windowJustOpened = false;
+                std::cout << "View window just closed: " << m_name << std::endl;
                 EventViewClosed::post({m_name});
             }
         } else {
@@ -40,6 +46,14 @@ namespace scummredux {
 
     // Helper functions for derived classes
     void View::beginChild(const char* id, const ImVec2& size, bool border, ImGuiWindowFlags flags) {
+        std::cout << "View::beginChild called with id: " << (id ? id : "nullptr") << std::endl;
+
+        // Defensive check for ID
+        if (id == nullptr || strlen(id) == 0) {
+            std::cout << "WARNING: beginChild called with invalid ID!" << std::endl;
+            id = "##DefaultChild";
+        }
+
         ImGui::BeginChild(id, size, border, flags);
     }
 
